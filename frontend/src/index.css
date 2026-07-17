@@ -1,0 +1,54 @@
+/* Общие настройки */
+* { box-sizing: border-box; }
+body { font-family: monospace; line-height: 1.4; color: #000; margin: 0; padding: 10px; }
+.container { max-width: 1100px; margin: 0 auto; width: 100%; }
+
+/* Убираем рамки у всего, кроме полей ввода */
+.card, .toolbar, .global-loader { border: none; padding: 0; margin-bottom: 20px; }
+
+/* Интерактивы (рамки только у полей и кнопок) */
+input, select, .btn { font: inherit; padding: 6px; border: 1px solid #000; background: #fff; cursor: pointer; }
+
+/* Таблица - минимум линий */
+table { width: 100%; border-collapse: collapse; table-layout: fixed; } /* fixed помогает не ломать верстку */
+th, td { text-align: left; padding: 10px; border-bottom: 1px solid #000; overflow: hidden; text-overflow: ellipsis; }
+th { background: #fff; border-bottom: 2px solid #000; }
+
+/* Навигация */
+.tabs-nav { display: flex; gap: 20px; margin-bottom: 20px; border-bottom: 1px solid #000; padding-bottom: 5px; }
+.tab-btn { border: none; background: none; color: #777; cursor: pointer; padding: 5px 0; }
+.tab-btn.active { color: #000; font-weight: bold; border-bottom: 2px solid #000; }
+
+/* Сетка фильтров без рамок */
+.toolbar { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+.filter-group { display: flex; flex-wrap: wrap; gap: 10px; }
+
+
+/* Разрешаем таблице прокручиваться, если она не влезает */
+.table-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.assignee-input {
+  width: 80px !important; /* Установите ширину, которая вам нравится */
+  min-width: 80px;        /* Запрещает сжатие меньше этого размера */
+  flex-shrink: 0;         /* Запрещает флекс-контейнеру сжимать этот элемент */
+}
+
+/* Исправляем блок пагинации */
+.pagination {
+  display: flex;
+  flex-direction: row; /* Принудительно в строку */
+  align-items: center;
+  gap: 10px;           /* Отступ между всеми элементами */
+  flex-wrap: nowrap;   /* Запрещаем перенос */
+  margin-top: 20px;
+  padding: 10px 0;
+}
+
+/* Ограничиваем инпут для страницы */
+.jump-input {
+  width: 60px;
+  margin: 0;
+}

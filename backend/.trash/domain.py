@@ -1,4 +1,4 @@
-from datatime import datetime
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 
@@ -30,7 +30,7 @@ class Ticket:
 
     def __init__(self, id: int, created_at: datetime,
                  aughtor_id: int, assignee_id: Optional[int],
-                 description: str, deadline: datetime, status: TicketStatus.NEW) -> None:
+                 description: str, deadline: datetime, status: TicketStatus) -> None:
         self.id = id
         self.created_at = created_at
         self.aughtor_id = aughtor_id
@@ -44,7 +44,6 @@ class Ticket:
         return self._status
     
     def change_status(self, new_status: TicketStatus) -> None:
-        self._status = new_status
 
         if self._status == new_status:
             return

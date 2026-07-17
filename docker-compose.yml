@@ -1,0 +1,59 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: db
+    restart: always
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: qwerty1234
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/data/db
+    networks:
+      - network
+
+  backend:
+    build: 
+      context: ./backend
+    container_name: backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=mydb
+      - DB_USER=dbuser
+      - DB_PASSWORD=qwerty1234
+    depends_on:
+      db:
+        condition: service_started
+    networks:
+      - network
+    
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - network
+
+volumes:
+  pgdata:
+
+networks:
+  network:
+    driver: bridge
