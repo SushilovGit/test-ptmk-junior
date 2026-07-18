@@ -5,7 +5,7 @@ export default function Tickets({ API_BASE_URL }) {
   const [tickets, setTickets] = useState([]);
   const [ticketsTotal, setTicketsTotal] = useState(0);
   const [ticketPage, setTicketPage] = useState(1);
-  const ticketLimit = 24;
+  const limit = 24;
 
   const [statusFilter, setStatusFilter] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
@@ -24,7 +24,7 @@ export default function Tickets({ API_BASE_URL }) {
   const [createError, setCreateError] = useState('');
   const [editStates, setEditStates] = useState({});
 
-  const totalPages = Math.ceil(ticketsTotal / ticketLimit) || 1;
+  const totalPages = Math.ceil(ticketsTotal / limit) || 1;
 
 
   useEffect(() => {
@@ -34,11 +34,11 @@ export default function Tickets({ API_BASE_URL }) {
   const fetchTickets = async () => {
     // setLoading(true);
     try {
-      const offset = (ticketPage - 1) * ticketLimit;
+      const offset = (ticketPage - 1) * limit;
       const params = new URLSearchParams({
         sorted_by: ticketSortBy,
         sorted_order: ticketSortOrder,
-        limit: ticketLimit,
+        limit: limit,
         offset: offset
       });
 

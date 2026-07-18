@@ -6,7 +6,7 @@ export default function Employees({ API_BASE_URL}) {
   const [empSortBy, setEmpSortBy] = useState('id');
   const [empSortOrder, setEmpSortOrder] = useState('asc');
   const [empOffset, setEmpOffset] = useState(0);
-  const [empLimit] = useState(24);
+  const empLimit = 24;
 
 
   const fetchEmployees = async () => {
