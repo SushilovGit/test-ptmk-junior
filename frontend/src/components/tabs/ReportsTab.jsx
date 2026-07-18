@@ -39,8 +39,7 @@ export default function Reports({ API_BASE_URL}) {
   return (
     <div className="reports-grid">
       <div className="card stat-card overdue">
-        <h4>Просрочено заявок в системе всего:{generalStats?.overdue_count || 0}</h4>
-        <div className="huge-number">{generalStats?.overdue_count || 0}</div>
+        <h4>Просрочено заявок в системе всего: {generalStats?.overdue_count || 0}</h4>
       </div>
 
       <div className="card">
