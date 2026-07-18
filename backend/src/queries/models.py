@@ -33,7 +33,6 @@ class TicketORM(Base):
     id: Mapped[intpk]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), nullable=False)
     
-    # Индексы на foreign keys обязательны для производительности JOIN
     author_id: Mapped[int] = mapped_column(Integer, ForeignKey("employees.id", ondelete='CASCADE'), index=True, nullable=False)
     assignee_id: Mapped[int] = mapped_column(Integer, ForeignKey("employees.id"), index=True, nullable=True)
     
@@ -41,7 +40,7 @@ class TicketORM(Base):
     deadline: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     status: Mapped[str] = mapped_column(SQLEnum(TicketStatusEnum), nullable=False)
 
-    # Составной индекс для ваших самых тяжелых запросов
+    # индексы для жирных запросов
     __table_args__ = (
         Index('idx_tickets_status_assignee_deadline', 'status', 'assignee_id', 'deadline'),
         # Индекс для сортировки по дедлайну, если часто используете его отдельно
