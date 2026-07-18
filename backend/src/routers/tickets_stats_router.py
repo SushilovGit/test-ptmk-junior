@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from pydantic import BaseModel
 from sqlalchemy import select, func
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,11 +10,11 @@ from src.queries.dependencies import get_db
 router = APIRouter(prefix="/stats", tags=["Tickets Stats"])
 
 
-from src.schemas import PagedResponse, AssigneeStatsSchema, StatusCountSchema, GeneralStatsResponseSchema
+from src.schemas import PagedResponse, AssigneeStatsSchema, GeneralStatsResponseSchema
 
 @router.get("/assignees", response_model=PagedResponse[AssigneeStatsSchema])
 async def get_tickets_assignees_status(
-    limit: int = Query(5, ge=1, le=50),
+    limit: int = Query(5, ge=1),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):

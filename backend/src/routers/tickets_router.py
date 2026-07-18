@@ -18,7 +18,7 @@ router = APIRouter(prefix="/tickets", tags=["Tickets"])
 
 @router.get("/", response_model=PagedResponse[TicketResponseSchema])
 async def get_tickets(
-    limit: int = Query(24, ge=1, le=100),
+    limit: int = Query(24, ge=1),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
@@ -33,7 +33,7 @@ async def get_tickets(
 
 @router.get("/filtered", response_model=PagedResponse[TicketResponseSchema])
 async def get_sorted_tickets(
-    limit: int = Query(24, ge=1, le=1_000),
+    limit: int = Query(24, ge=1),
     offset: int = Query(0, ge=0),
     status: TicketStatusEnum = Query(None),
     assignee_id: int = Query(None),
