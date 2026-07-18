@@ -37,7 +37,7 @@ export default function Reports({ API_BASE_URL}) {
   }, [assigneePage]);
 
   return (
-    <div className="reports-grid">
+    <>
       <div className="card stat-card overdue">
         <h4>Просрочено заявок в системе всего: {generalStats?.overdue_count || 0}</h4>
       </div>
@@ -74,6 +74,6 @@ export default function Reports({ API_BASE_URL}) {
           onPageChange={setAssigneePage} 
         />
       </div>
-    </div>
+    </>
   );
 }
