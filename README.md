@@ -1,5 +1,5 @@
 # СРМ (home edition)
-
+![alt text](./img/init.png)
 ## Инструкция по запуску
 
 1. Склонируйте репозиторий (убедитесь, что у вас установлены Docker и Docker Compose):
