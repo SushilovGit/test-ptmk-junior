@@ -1,54 +1,59 @@
 from datetime import datetime
-from typing import List
-
+from typing import List, Generic, TypeVar
 from pydantic import BaseModel, ConfigDict, Field
+from src.queries.models import TicketStatusEnum
 
-from src.models import TicketStatusEnum
+T = TypeVar("T")
 
-
-
-
-class EmployeeSchema(BaseModel):
-    id: int
-    fullname: str
-    department_id: int
-    role: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-
-class DepartmentSchema(BaseModel):
-    id: int
-    name: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-
-class TicketCreateSchema(BaseModel):
-    author_id: int
-    description: str = Field(max_length=1000)
-    deadline: datetime
-
-class TicketUpdateStateSchema(BaseModel):
-    assignee_id: int | None
-    status: TicketStatusEnum | None
-
-class TicketResponseSchema(BaseModel):
-    id: int
-    created_at: datetime
-    author_id: int
-    assignee_id: int | None
-    description: str
-    deadline: datetime
-    status: TicketStatusEnum
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class PagedTicketResponseSchema(BaseModel):
+class PagedResponse(BaseModel, Generic[T]):
     total: int
     limit: int
     offset: int
-    results: List[TicketResponseSchema]
+    results: List[T]
+
+# Сотрудники
+class EmployeeSingleSchema(BaseModel):
+    id: int
+    fullname: str
+    role: str
+    department_id: int
+    department_name: str
+    model_config = ConfigDict(from_attributes=True)
+
+# Заявки (наследование)
+class TicketBase(BaseModel):
+    author_id: int
+    assignee_id: int | None = None
+    description: str = Field(..., max_length=1000)
+    deadline: datetime
+    status: TicketStatusEnum = TicketStatusEnum.NEW
+
+class TicketCreateSchema(TicketBase):
+    pass
+
+class TicketResponseSchema(TicketBase):
+    id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+# Обновления
+class TicketStatusUpdateSchema(BaseModel):
+    status: TicketStatusEnum
+
+class TicketAssigneeUpdateSchema(BaseModel):
+    assignee_id: int | None = None
+
+# Статистика
+class StatusCountSchema(BaseModel):
+    status: str
+    count: int
+
+class AssigneeStatsSchema(BaseModel):
+    assignee_id: int
+    fullname: str
+    count: int
+
+
+class GeneralStatsResponseSchema(BaseModel):
+    by_status: list[StatusCountSchema]
+    overdue_count: int

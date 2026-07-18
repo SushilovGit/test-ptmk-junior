@@ -72,6 +72,7 @@
 
 Выполнить запрос:
 вывести все просроченные заявки конкретного исполнителя, находящиеся в статусе «В работе», отсортированные по сроку выполнения.
+![alt text](image-1.png)
 
 
 
@@ -116,3 +117,85 @@ GET http://127.0.0.1:8000/tickets?limit=24&offset=24
 
 
 http://127.0.0.1:8000/tickets/filtered?limit=10&is_overdue=true&status=IN_PROGRESS&assignee_id=1&offset=0&department_id=2
+
+
+
+
+
+log:
+
+Главная страница:
+backend   | Запрос /tickets/filtered выполнен за 0.4496 сек.
+backend   | INFO:     172.21.0.1:40518 - "GET /tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&offset=0 HTTP/1.1" 200 OK
+backend   | Запрос /tickets/filtered выполнен за 0.4483 сек.
+backend   | INFO:     172.21.0.1:40534 - "GET /tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&offset=0 HTTP/1.1" 200 OK
+
+
+
+
+
+
+GET http://127.0.0.1:8000/tickets?limit=24&offset=24
+
+
+
+http://127.0.0.1:8000/tickets/filtered?limit=10&is_overdue=true&status=IN_PROGRESS&assignee_id=1&offset=0&department_id=2
+
+
+
+
+user@starlight:~$ curl -w "\nВремя выполнения: %{time_total} сек.\n" -o /dev/null -s "http://localhost:8000/tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&status=IN_PROGRESS&assignee_id=622&is_overdue=true"
+
+Время выполнения: 0.371045 сек.
+
+
+
+
+user@starlight:~$ curl -w "\nВремя: %{time_total} сек.\n" -o /dev/null -s "http://localhost:8000/tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&status=IN_PROGRESS&assignee_id=622&is_overdue=true"
+
+Время: 0.017862 сек.
+user@starlight:~$ curl -w "\nВремя: %{time_total} сек.\n" -o /dev/null -s "http://localhost:8000/tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&status=IN_PROGRESS&assignee_id=622&is_overdue=true"
+
+Время: 0.015587 сек.
+user@starlight:~$ curl -w "\nВремя: %{time_total} сек.\n" -o /dev/null -s "http://localhost:8000/tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&status=IN_PROGRESS&assignee_id=622&is_overdue=true"
+
+Время: 0.016303 сек.
+
+
+
+
+
+
+
+
+
+Запрос /tickets/filtered выполнен за 0.2240 сек.
+backend   | INFO:     172.21.0.1:60704 - "GET /tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&offset=0 HTTP/1.1" 200 OK
+backend   | Запрос /tickets/filtered выполнен за 0.2632 сек.
+backend   | INFO:     172.21.0.1:60692 - "GET /tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&offset=0 HTTP/1.1" 200 OK
+backend   | Запрос /employee/ выполнен за 0.0588 сек.
+backend   | INFO:     172.21.0.1:60714 - "GET /employee/?sorted_by=id&sorted_order=asc&limit=24&offset=0 HTTP/1.1" 200 OK
+backend   | Запрос /employee/ выполнен за 0.0379 сек.
+backend   | INFO:     172.21.0.1:60718 - "GET /employee/?sorted_by=id&sorted_order=asc&limit=24&offset=0 HTTP/1.1" 200 OK
+backend   | Запрос /stats/general выполнен за 0.4778 сек.
+backend   | INFO:     172.21.0.1:60714 - "GET /stats/general HTTP/1.1" 200 OK
+backend   | Запрос /stats/assignees выполнен за 0.5572 сек.
+backend   | INFO:     172.21.0.1:60718 - "GET /stats/assignees HTTP/1.1" 200 OK
+backend   | Запрос /stats/general выполнен за 0.5701 сек.
+backend   | INFO:     172.21.0.1:41098 - "GET /stats/general HTTP/1.1" 200 OK
+backend   | Запрос /stats/assignees выполнен за 0.6597 сек.
+backend   | INFO:     172.21.0.1:41112 - "GET /stats/assignees HTTP/1.1" 200 OK
+backend   | Запрос /tickets/filtered выполнен за 0.0880 сек.
+backend   | INFO:     172.21.0.1:41122 - "GET /tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&offset=0 HTTP/1.1" 200 OK
+backend   | Запрос /tickets/filtered выполнен за 0.0864 сек.
+backend   | INFO:     172.21.0.1:41132 - "GET /tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&offset=0 HTTP/1.1" 200 OK
+backend   | Запрос /tickets/filtered выполнен за 0.1513 сек.
+backend   | INFO:     172.21.0.1:50910 - "GET /tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&offset=0&status=IN_PROGRESS HTTP/1.1" 200 OK
+backend   | Запрос /tickets/filtered выполнен за 0.0237 сек.
+backend   | INFO:     172.21.0.1:50910 - "GET /tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&offset=0&status=IN_PROGRESS&assignee_id=6 HTTP/1.1" 200 OK
+backend   | Запрос /tickets/filtered выполнен за 0.0078 сек.
+backend   | INFO:     172.21.0.1:50910 - "GET /tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&offset=0&status=IN_PROGRESS&assignee_id=62 HTTP/1.1" 200 OK
+backend   | Запрос /tickets/filtered выполнен за 0.0171 сек.
+backend   | INFO:     172.21.0.1:50910 - "GET /tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&offset=0&status=IN_PROGRESS&assignee_id=622 HTTP/1.1" 200 OK
+backend   | Запрос /tickets/filtered выполнен за 0.0229 сек.
+backend   | INFO:     172.21.0.1:50910 - "GET /tickets/filtered?sorted_by=deadline&sorted_order=asc&limit=10&offset=0&status=IN_PROGRESS&assignee_id=622&is_overdue=true HTTP/1.1" 200 OK

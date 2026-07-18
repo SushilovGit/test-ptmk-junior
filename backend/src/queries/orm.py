@@ -1,5 +1,4 @@
-from src.database import sync_engine, async_engine
-from src.models import EmployeeORM, DepartmentORM, TicketORM
+from src.database import sync_engine
 from src.database import Base
 
 def create_tables():

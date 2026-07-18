@@ -17,20 +17,19 @@ export default function Tickets({ API_BASE_URL, onTotalChange, setLoading }) {
   const [ticketSortBy, setTicketSortBy] = useState('deadline');
   const [ticketSortOrder, setTicketSortOrder] = useState('asc');
 
+  // Состояния для создания заявки
   const [newDescription, setNewDescription] = useState('');
-  const [newDeadline, setNewDeadline] = useState('');
   const [newAuthorId, setNewAuthorId] = useState('');
+  const [deadlineOption, setDeadlineOption] = useState('2'); // Выбор срока
   const [createError, setCreateError] = useState('');
   const [editStates, setEditStates] = useState({});
 
   const totalPages = Math.ceil(ticketsTotal / ticketLimit) || 1;
 
-  // Обновляем общий счетчик в App.jsx при изменении
   useEffect(() => {
     onTotalChange(ticketsTotal);
   }, [ticketsTotal, onTotalChange]);
 
-  // Сброс страницы при изменении фильтров
   useEffect(() => {
     setTicketPage(1);
   }, [statusFilter, assigneeFilter, departmentFilter, isOverdueFilter, deadlineFrom, deadlineTo]);
@@ -74,41 +73,53 @@ export default function Tickets({ API_BASE_URL, onTotalChange, setLoading }) {
 
   useEffect(() => {
     fetchTickets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketPage, ticketSortBy, ticketSortOrder, statusFilter, assigneeFilter, departmentFilter, isOverdueFilter, deadlineFrom, deadlineTo]);
+
+  const calculateDeadline = (days) => {
+    const date = new Date();
+    date.setDate(date.getDate() + parseInt(days));
+    return date.toISOString().slice(0, 16);
+  };
 
   const handleCreateTicket = async (e) => {
     e.preventDefault();
     setCreateError('');
-    if (!newDescription || !newDeadline || !newAuthorId) {
-      setCreateError('Пожалуйста, заполните все поля!');
+
+    if (!newDescription || !newAuthorId) {
+      setCreateError('Пожалуйста, заполните описание и ID автора');
       return;
     }
+
+    const ticketPayload = {
+      author_id: parseInt(newAuthorId, 10),
+      description: newDescription,
+      deadline: calculateDeadline(deadlineOption),
+      status: "NEW"
+    };
+
+    setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/tickets/`, {
+      const res = await fetch(`${API_BASE_URL}/tickets/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          author_id: parseInt(newAuthorId, 10),
-          description: newDescription,
-          deadline: new Date(newDeadline).toISOString(), 
-          status: 'NEW'
-        }),
+        body: JSON.stringify(ticketPayload),
       });
-      if (response.ok) {
+
+      if (res.ok) {
         setNewDescription('');
-        setNewDeadline('');
         setNewAuthorId('');
-        fetchTickets();
-        alert('Заявка успешно создана!');
+        fetchTickets(); // Обновляем список после создания
       } else {
-        const errData = await response.json();
-        setCreateError(errData.detail || 'Ошибка при создании заявки');
+        const errorData = await res.json();
+        setCreateError(errorData.detail || 'Ошибка при создании');
       }
-    } catch (err) { 
-      setCreateError('Не удалось связаться с сервером'); 
+    } catch (err) {
+      setCreateError('Не удалось связаться с сервером');
+    } finally {
+      setLoading(false);
     }
   };
+
 
   const handleUpdateTicket = async (ticketId, originalTicket) => {
     const editData = editStates[ticketId];
@@ -162,9 +173,31 @@ export default function Tickets({ API_BASE_URL, onTotalChange, setLoading }) {
       <div className="card create-card">
         <h3>Создать новую заявку</h3>
         <form onSubmit={handleCreateTicket} className="create-form">
-          <input type="text" placeholder="Что случилось? (Описание)" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} maxLength={1000} />
-          <input type="datetime-local" value={newDeadline} onChange={(e) => setNewDeadline(e.target.value)} />
-          <input type="number" placeholder="ID автора" value={newAuthorId} onChange={(e) => setNewAuthorId(e.target.value)} />
+          <input 
+            type="text" 
+            placeholder="Что случилось?" 
+            value={newDescription} 
+            onChange={(e) => setNewDescription(e.target.value)} 
+            maxLength={1000} 
+          />
+          
+          <label>Срок выполнения:</label>
+          <select 
+            value={deadlineOption} 
+            onChange={(e) => setDeadlineOption(e.target.value)}
+          >
+            <option value="1">Срочно (1 день)</option>
+            <option value="2">Стандарт (2 дня)</option>
+            <option value="5">Не срочно (5 дней)</option>
+            <option value="7">Долгосрочно (7 дней)</option>
+          </select>
+          
+          <input 
+            type="number" 
+            placeholder="ID автора" 
+            value={newAuthorId} 
+            onChange={(e) => setNewAuthorId(e.target.value)} 
+          />
           <button type="submit" className="btn btn-success">Создать</button>
         </form>
         {createError && <p className="error-text">{createError}</p>}

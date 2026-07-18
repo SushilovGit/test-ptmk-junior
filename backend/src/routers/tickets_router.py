@@ -1,228 +1,123 @@
 from datetime import date, datetime
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import asc, desc, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel # Добавили импорт BaseModel
-
-from src.dependencies import get_db
-from src.models import EmployeeORM, TicketORM, TicketStatusEnum
-from src.schemas import PagedTicketResponseSchema, TicketResponseSchema
+from src.queries.dependencies import get_db
+from src.queries.models import EmployeeORM, TicketORM, TicketStatusEnum
+from datetime import datetime
+from src.queries.models import TicketStatusEnum
+from src.schemas import (
+    PagedResponse, 
+    TicketResponseSchema, 
+    TicketCreateSchema, 
+    TicketStatusUpdateSchema, 
+    TicketAssigneeUpdateSchema
+)
 
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
 
-
-
-from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field
-from src.models import TicketStatusEnum
-
-# Схема для создания (то, что присылает клиент)
-class TicketCreateSchema(BaseModel):
-    author_id: int
-    assignee_id: Optional[int] = None
-    description: str = Field(..., max_length=1000, description="Описание проблемы")
-    deadline: datetime
-    status: TicketStatusEnum = TicketStatusEnum.NEW  # По умолчанию статус "NEW"
-
-# Схема для ответа (то, что возвращает сервер после успешного создания)
-class TicketResponseSingleSchema(BaseModel):
-    id: int
-    created_at: datetime
-    author_id: int
-    assignee_id: Optional[int]
-    description: str
-    deadline: datetime
-    status: TicketStatusEnum
-
-    class Config:
-        from_attributes = True
-
-
-@router.get("/", response_model=PagedTicketResponseSchema)
+@router.get("/", response_model=PagedResponse[TicketResponseSchema])
 async def get_tickets(
     limit: int = Query(24, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
     count_query = select(func.count(TicketORM.id))
-    total_result = await db.execute(count_query)
-    total_count = total_result.scalar_one()
+    total_count = (await db.execute(count_query)).scalar_one()
 
     query = select(TicketORM).offset(offset).limit(limit)
-    result = await db.execute(query)
-    tickets = result.scalars().all()
+    tickets = (await db.execute(query)).scalars().all()
     
-    return {
-        "total": total_count,
-        "limit": limit,
-        "offset": offset,
-        "results": tickets
-    }
+    return PagedResponse(total=total_count, limit=limit, offset=offset, results=tickets)
 
-@router.get("/filtered", response_model=PagedTicketResponseSchema)
+
+@router.get("/filtered", response_model=PagedResponse[TicketResponseSchema])
 async def get_sorted_tickets(
-    limit: int = Query(24, ge=1, le=10_000),
+    limit: int = Query(24, ge=1, le=1_000),
     offset: int = Query(0, ge=0),
-
-    status: str = Query(None),
+    status: TicketStatusEnum = Query(None),
     assignee_id: int = Query(None),
     department_id: int = Query(None),
     is_overdue: bool = Query(None),
-    
-    # НОВЫЕ ПАРАМЕТРЫ:
-    deadline_from: date = Query(None, description="Начало диапазона срока исполнения"),
-    deadline_to: date = Query(None, description="Конец диапазона срока исполнения"),
-
+    deadline_from: date = Query(None),
+    deadline_to: date = Query(None),
     sorted_by: str = Query("deadline"),
     sorted_order: str = Query("asc"),
-
     db: AsyncSession = Depends(get_db)
 ):
-    count_query = select(func.count(TicketORM.id))
     query = select(TicketORM)
+    count_query = select(func.count(TicketORM.id))
 
-    # 1. Существующие фильтры
-    if status is not None:
-        count_query = count_query.where(TicketORM.status == status)
-        query = query.where(TicketORM.status == status)
-    
-    if assignee_id is not None:
-        count_query = count_query.where(TicketORM.assignee_id == assignee_id)
-        query = query.where(TicketORM.assignee_id == assignee_id)
-
-    # 2. Фильтрация по датам (НОВАЯ ЛОГИКА)
-    if deadline_from is not None:
-        # Приводим date к datetime, если в БД поле timestamp
-        count_query = count_query.where(TicketORM.deadline >= deadline_from)
-        query = query.where(TicketORM.deadline >= deadline_from)
-    
-    if deadline_to is not None:
-        # deadline_to считаем до конца дня
-        count_query = count_query.where(TicketORM.deadline <= deadline_to)
-        query = query.where(TicketORM.deadline <= deadline_to)
-
-    # 3. Динамический JOIN для департамента
-    if department_id is not None:
-        count_query = count_query.join(EmployeeORM, TicketORM.author_id == EmployeeORM.id) \
-                                 .where(EmployeeORM.department_id == department_id)
-        query = query.join(EmployeeORM, TicketORM.author_id == EmployeeORM.id) \
-                     .where(EmployeeORM.department_id == department_id)
-
-    # 4. Фильтр просрочки
-    if is_overdue is not None:
-        now = datetime.now()
-        if is_overdue:
+    # Применение фильтров
+    def apply_filters(q):
+        if status: q = q.where(TicketORM.status == status)
+        if assignee_id: q = q.where(TicketORM.assignee_id == assignee_id)
+        if deadline_from: q = q.where(TicketORM.deadline >= deadline_from)
+        if deadline_to: q = q.where(TicketORM.deadline <= deadline_to)
+        if department_id:
+            q = q.join(EmployeeORM).where(EmployeeORM.department_id == department_id)
+        if is_overdue is not None:
+            now = datetime.now()
             cond = (TicketORM.deadline < now) & (TicketORM.status != TicketStatusEnum.COMPLETED)
-        else:
-            cond = (TicketORM.deadline >= now) | (TicketORM.status == TicketStatusEnum.COMPLETED)
-        count_query = count_query.where(cond)
-        query = query.where(cond)
+            q = q.where(cond if is_overdue else ~cond)
+        return q
 
-    # Исполнение запросов...
-    total_result = await db.execute(count_query)
-    total_count = total_result.scalar_one()
+    query = apply_filters(query)
+    count_query = apply_filters(count_query)
 
-    sort_column = getattr(TicketORM, sorted_by, TicketORM.status)
-    query = query.order_by(asc(sort_column) if sorted_order == "asc" else desc(sort_column))
+    total_count = (await db.execute(count_query)).scalar_one()
 
-    query = query.offset(offset).limit(limit)
-    result = await db.execute(query)
-    
-    return {
-        "total": total_count,
-        "limit": limit,
-        "offset": offset,
-        "results": result.scalars().all()
-    }
+    # Сортировка
+    sort_column = getattr(TicketORM, sorted_by, TicketORM.deadline)
+    query = query.order_by(asc(sort_column)
+                           if sorted_order == "asc" 
+                           else desc(sort_column))
+
+    result = await db.execute(query.offset(offset).limit(limit))
+    return PagedResponse(total=total_count, limit=limit, offset=offset, results=result.scalars().all())
 
 
-@router.post("/", response_model=TicketResponseSingleSchema, status_code=status.HTTP_201_CREATED)
-async def create_ticket(
-    ticket_data: TicketCreateSchema,
-    db: AsyncSession = Depends(get_db)
-):
-    
-    
-    # 1. Проверяем, существует ли автор заявки
-    author_exists = await db.execute(
-        select(EmployeeORM.id).where(EmployeeORM.id == ticket_data.author_id)
-    )
-    if not author_exists.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Автор с id {ticket_data.author_id} не найден."
-        )
 
-    # 2. Проверяем исполнителя (если он передан)
-    if ticket_data.assignee_id is not None:
+@router.post("/", response_model=TicketResponseSchema, status_code=status.HTTP_201_CREATED)
+async def create_ticket(ticket_data: TicketCreateSchema, db: AsyncSession = Depends(get_db)):
+    data = ticket_data.model_dump()
+    if data.get("deadline") and hasattr(data["deadline"], "replace"):
+        data["deadline"] = data["deadline"].replace(tzinfo=None)
+
+    # проверяем исполнителя
+    if data.get("assignee_id") is not None:
         assignee_exists = await db.execute(
-            select(EmployeeORM.id).where(EmployeeORM.id == ticket_data.assignee_id)
+            select(EmployeeORM.id).where(EmployeeORM.id == data["assignee_id"])
         )
         if not assignee_exists.scalar_one_or_none():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Исполнитель с id {ticket_data.assignee_id} не найден."
+                detail=f"Исполнитель с id {data['assignee_id']} не найден."
             )
 
-    # 3. Создаем объект модели SQLAlchemy
-    # Использование **ticket_data.model_dump() автоматически развернет Pydantic-схему в параметры конструктора
-    new_ticket = TicketORM(**ticket_data.model_dump())
-
-    # 4. Добавляем в сессию и сохраняем в БД
+    new_ticket = TicketORM(**data)
     db.add(new_ticket)
     await db.commit()
-    
-    # 5. Свежие системные поля (id, created_at) подгрузятся из БД обратно в объект
     await db.refresh(new_ticket)
-
     return new_ticket
 
 
 
-
-
-
-
-
-
-
-
-
-# В начало файла к остальным Pydantic-схемам добавь:
-class TicketStatusUpdateSchema(BaseModel):
-    status: TicketStatusEnum
-
-class TicketAssigneeUpdateSchema(BaseModel):
-    assignee_id: Optional[int] = None # None, если нужно снять исполнителя
-
-
-# --- ДОБАВЛЯЕМ В КОНЕЦ ФАЙЛА РОУТЕРА ЗАЯВОК ---
-@router.patch("/{ticket_id}/status", response_model=TicketResponseSingleSchema)
-async def update_ticket_status(
-    ticket_id: int,
-    status_data: TicketStatusUpdateSchema,
-    db: AsyncSession = Depends(get_db)
-):
-    # 1. Ищем существующую заявку
+@router.patch("/{ticket_id}/status", response_model=TicketResponseSchema)
+async def update_ticket_status(ticket_id: int, status_data: TicketStatusUpdateSchema, db: AsyncSession = Depends(get_db)):
+    """смена статуса заявки"""
     result = await db.execute(select(TicketORM).where(TicketORM.id == ticket_id))
     ticket = result.scalar_one_or_none()
-    
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Заявка не найдена")
 
     current_status = ticket.status
     new_status = status_data.status
 
-    # 2. Если статус не меняется, возвращаем как есть
     if current_status == new_status:
         return ticket
 
-    # 3. Чистая матрица переходов без CANCELLED
     allowed_transitions = {
         TicketStatusEnum.NEW: [TicketStatusEnum.IN_PROGRESS],
-        TicketStatusEnum.IN_PROGRESS: [TicketStatusEnum.COMPLETED],  # Теперь отсюда только в COMPLETED
+        TicketStatusEnum.IN_PROGRESS: [TicketStatusEnum.COMPLETED],
         TicketStatusEnum.COMPLETED: []
     }
 
@@ -232,35 +127,26 @@ async def update_ticket_status(
             detail=f"Недопустимый перевод статуса из {current_status.value} в {new_status.value}"
         )
 
-    # 4. Обновляем и сохраняем
     ticket.status = new_status
     await db.commit()
     await db.refresh(ticket)
     return ticket
 
-
-@router.patch("/{ticket_id}/assignee", response_model=TicketResponseSingleSchema)
+@router.patch("/{ticket_id}/assignee", response_model=TicketResponseSchema)
 async def update_ticket_assignee(
     ticket_id: int,
     assignee_data: TicketAssigneeUpdateSchema,
     db: AsyncSession = Depends(get_db)
 ):
-    # 1. Ищем заявку
+    """"""
     result = await db.execute(select(TicketORM).where(TicketORM.id == ticket_id))
     ticket = result.scalar_one_or_none()
-    
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Заявка не найдена")
 
-    # 2. Если исполнителя передали, проверяем, что такой сотрудник реально существует
     if assignee_data.assignee_id is not None:
-        emp_result = await db.execute(
-            select(EmployeeORM.id).where(EmployeeORM.id == assignee_data.assignee_id)
-        )
+        emp_result = await db.execute(select(EmployeeORM.id).where(EmployeeORM.id == assignee_data.assignee_id))
         if not emp_result.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="Указанный исполнитель не найден")
 
-    # 3. Меняем исполнителя
     ticket.assignee_id = assignee_data.assignee_id
     await db.commit()
     await db.refresh(ticket)
