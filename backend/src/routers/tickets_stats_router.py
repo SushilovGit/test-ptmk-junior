@@ -11,9 +11,6 @@ from src.queries.dependencies import get_db
 router = APIRouter(prefix="/stats", tags=["Tickets Stats"])
 
 
-
-
-
 from src.schemas import PagedResponse, AssigneeStatsSchema, StatusCountSchema, GeneralStatsResponseSchema
 
 @router.get("/assignees", response_model=PagedResponse[AssigneeStatsSchema])

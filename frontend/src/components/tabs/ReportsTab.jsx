@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
-import Pagination from '../Pagination'; // Убедитесь, что путь верный
+import Pagination from '../Pagination';
 
-export default function Reports({ API_BASE_URL, setLoading }) {
+export default function Reports({ API_BASE_URL}) {
   const [generalStats, setGeneralStats] = useState(null);
   const [assigneeStats, setAssigneeStats] = useState([]);
   const [assigneePage, setAssigneePage] = useState(1);
   const [totalAssignees, setTotalAssignees] = useState(0);
-  const limit = 25; // Лимит как на бэкенде
+  const limit = 25;
 
   const totalPages = Math.ceil(totalAssignees / limit) || 1;
 
   const fetchReports = async () => {
-    setLoading(true);
     try {
       const offset = (assigneePage - 1) * limit;
       
@@ -30,15 +29,11 @@ export default function Reports({ API_BASE_URL, setLoading }) {
       }
     } catch (e) { 
       console.error(e); 
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Перезагружаем только список исполнителей при смене страницы
   useEffect(() => {
     fetchReports();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assigneePage]);
 
   return (
@@ -73,8 +68,7 @@ export default function Reports({ API_BASE_URL, setLoading }) {
             ))}
           </tbody>
         </table>
-        
-        {/* Добавляем пагинацию под таблицей */}
+
         <Pagination 
           currentPage={assigneePage} 
           totalPages={totalPages} 

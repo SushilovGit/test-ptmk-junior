@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import Pagination from '../Pagination'; 
 
-export default function Tickets({ API_BASE_URL, onTotalChange, setLoading }) {
+export default function Tickets({ API_BASE_URL }) {
   const [tickets, setTickets] = useState([]);
   const [ticketsTotal, setTicketsTotal] = useState(0);
   const [ticketPage, setTicketPage] = useState(1);
-  const ticketLimit = 10;
+  const ticketLimit = 24;
 
   const [statusFilter, setStatusFilter] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
@@ -17,25 +17,22 @@ export default function Tickets({ API_BASE_URL, onTotalChange, setLoading }) {
   const [ticketSortBy, setTicketSortBy] = useState('deadline');
   const [ticketSortOrder, setTicketSortOrder] = useState('asc');
 
-  // Состояния для создания заявки
+  // создания заявки
   const [newDescription, setNewDescription] = useState('');
   const [newAuthorId, setNewAuthorId] = useState('');
-  const [deadlineOption, setDeadlineOption] = useState('2'); // Выбор срока
+  const [deadlineOption, setDeadlineOption] = useState('2');
   const [createError, setCreateError] = useState('');
   const [editStates, setEditStates] = useState({});
 
   const totalPages = Math.ceil(ticketsTotal / ticketLimit) || 1;
 
-  useEffect(() => {
-    onTotalChange(ticketsTotal);
-  }, [ticketsTotal, onTotalChange]);
 
   useEffect(() => {
     setTicketPage(1);
   }, [statusFilter, assigneeFilter, departmentFilter, isOverdueFilter, deadlineFrom, deadlineTo]);
 
   const fetchTickets = async () => {
-    setLoading(true);
+    // setLoading(true);
     try {
       const offset = (ticketPage - 1) * ticketLimit;
       const params = new URLSearchParams({
@@ -66,8 +63,6 @@ export default function Tickets({ API_BASE_URL, onTotalChange, setLoading }) {
       }
     } catch (error) { 
       console.error("Ошибка загрузки:", error); 
-    } finally { 
-      setLoading(false); 
     }
   };
 
@@ -97,7 +92,7 @@ export default function Tickets({ API_BASE_URL, onTotalChange, setLoading }) {
       status: "NEW"
     };
 
-    setLoading(true);
+    // setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/tickets/`, {
         method: 'POST',
@@ -108,15 +103,13 @@ export default function Tickets({ API_BASE_URL, onTotalChange, setLoading }) {
       if (res.ok) {
         setNewDescription('');
         setNewAuthorId('');
-        fetchTickets(); // Обновляем список после создания
+        fetchTickets();
       } else {
         const errorData = await res.json();
         setCreateError(errorData.detail || 'Ошибка при создании');
       }
     } catch (err) {
       setCreateError('Не удалось связаться с сервером');
-    } finally {
-      setLoading(false);
     }
   };
 

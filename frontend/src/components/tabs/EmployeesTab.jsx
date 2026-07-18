@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import Pagination from '../Pagination'; // <-- Импортируем компонент
-
-export default function Employees({ API_BASE_URL, onTotalChange, setLoading }) {
+import Pagination from '../Pagination';
+export default function Employees({ API_BASE_URL}) {
   const [employees, setEmployees] = useState([]);
   const [empTotal, setEmpTotal] = useState(0);
   const [empSortBy, setEmpSortBy] = useState('id');
@@ -9,12 +8,8 @@ export default function Employees({ API_BASE_URL, onTotalChange, setLoading }) {
   const [empOffset, setEmpOffset] = useState(0);
   const [empLimit] = useState(24);
 
-  useEffect(() => {
-    onTotalChange(empTotal);
-  }, [empTotal, onTotalChange]);
 
   const fetchEmployees = async () => {
-    setLoading(true);
     try {
       const res = await fetch(
         `${API_BASE_URL}/employee/?sorted_by=${empSortBy}&sorted_order=${empSortOrder}&limit=${empLimit}&offset=${empOffset}`
@@ -27,22 +22,16 @@ export default function Employees({ API_BASE_URL, onTotalChange, setLoading }) {
     } catch (e) { 
       console.error(e); 
     } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchEmployees();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [empSortBy, empSortOrder, empOffset]);
 
-  // --- АДАПТАЦИЯ ДЛЯ PAGINATION ---
-  // Вычисляем номер текущей страницы и общее число страниц для UI
   const currentEmpPage = Math.floor(empOffset / empLimit) + 1;
   const totalEmpPages = Math.ceil(empTotal / empLimit) || 1;
 
-  // Функция, которую мы передадим в Pagination. 
-  // Она получает номер страницы и переводит его в offset
   const handleEmpPageChange = (newPage) => {
     setEmpOffset((newPage - 1) * empLimit);
   };

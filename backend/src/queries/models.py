@@ -17,7 +17,6 @@ class EmployeeORM(Base):
 
     id: Mapped[intpk]
     fullname: Mapped[str] = mapped_column(String(255), nullable=False)
-    # Индекс на department_id, так как по нему будут частые JOIN
     department_id: Mapped[int] = mapped_column(Integer, ForeignKey("departments.id"), index=True, nullable=False)
     role: Mapped[str] = mapped_column(String(50), nullable=False)
 

@@ -3,14 +3,14 @@ import { useState } from 'react';
 export default function Pagination({ currentPage, totalPages, onPageChange }) {
   const [jumpValue, setJumpValue] = useState('');
 
-  // Если страница всего одна или данных нет, пагинацию не показываем
   if (totalPages <= 1) return null;
 
   const handleJump = () => {
     const val = parseInt(jumpValue, 10);
+
     if (val >= 1 && val <= totalPages) {
       onPageChange(val);
-      setJumpValue(''); // Очищаем поле после успешного перехода
+      setJumpValue('');
     } else {
       alert(`Введите страницу от 1 до ${totalPages}`);
     }
