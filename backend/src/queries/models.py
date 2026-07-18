@@ -1,7 +1,7 @@
 from typing import Annotated
 from datetime import datetime
-from sqlalchemy import Table, Column, Integer, String, DateTime, Enum as SQLEnum, ForeignKey, MetaData, func, Index
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import Integer, String, DateTime, Enum as SQLEnum, ForeignKey, func, Index
+from sqlalchemy.orm import Mapped, mapped_column
 from src.database import Base
 import enum
 
@@ -39,9 +39,7 @@ class TicketORM(Base):
     deadline: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     status: Mapped[str] = mapped_column(SQLEnum(TicketStatusEnum), nullable=False)
 
-    # индексы для жирных запросов
     __table_args__ = (
         Index('idx_tickets_status_assignee_deadline', 'status', 'assignee_id', 'deadline'),
-        # Индекс для сортировки по дедлайну, если часто используете его отдельно
         Index('idx_tickets_deadline', 'deadline'),
     )
