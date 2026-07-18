@@ -14,7 +14,6 @@ export default function Reports({ API_BASE_URL}) {
     try {
       const offset = (assigneePage - 1) * limit;
       
-      // Параллельные запросы
       const [resGen, resAss] = await Promise.all([
         fetch(`${API_BASE_URL}/stats/general`), 
         fetch(`${API_BASE_URL}/stats/assignees?limit=${limit}&offset=${offset}`)
