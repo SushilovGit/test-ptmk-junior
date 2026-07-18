@@ -18,7 +18,7 @@ async def seed_database():
         await conn.run_sync(Base.metadata.create_all)
 
     async with async_session() as session:
-        for name in ["IT", "Продавецы", "Финансисты", "HR", "Поддержка"]:
+        for name in ["IT", "Продавцы", "Финансисты", "HR", "Поддержка"]:
             res = await session.execute(select(DepartmentORM).filter_by(name=name))
             if not res.scalar():
                 session.add(DepartmentORM(name=name))
@@ -27,7 +27,7 @@ async def seed_database():
         dept_ids = (await session.execute(select(DepartmentORM.id))).scalars().all()
 
         res_count = await session.execute(select(func.count(EmployeeORM.id)))
-        if res_count.scalar() < 100:
+        if res_count.scalar() < 1_000:
             emps = [EmployeeORM(fullname=f"Имя Фамилия {i}", department_id=random.choice(dept_ids), role="worker") for i in range(1000)]
             session.add_all(emps)
             await session.commit()
@@ -37,14 +37,14 @@ async def seed_database():
         res_tickets = await session.execute(select(func.count(TicketORM.id)))
         current_count = res_tickets.scalar()
         
-        if current_count < 1_000:
+        if current_count < 1_000_000:
             weights = [random.randint(1, 10) for _ in emp_ids]
             statuses = list(TicketStatusEnum)
             now = datetime.utcnow()
             
-            total_to_gen = 1_000 - current_count
-            chunk_size = 100
-            print(f"Начинаем генерацию")
+            total_to_gen = 1_000_000 - current_count
+            chunk_size = 5_000
+            print(f"генерацию")
             
             for chunk in range(total_to_gen // chunk_size):
                 tickets_data = []
